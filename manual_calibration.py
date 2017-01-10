@@ -14,6 +14,9 @@ import pickle
 from serial import SerialException
 
 from os.path import expanduser
+
+from devices.fakedevice_gui import launch_device_gui
+
 home = expanduser("~")
 config_filename = home+'/config_manipulator2.cfg'
 
@@ -188,14 +191,21 @@ class ManipulatorApplication(Frame):
 
 
 if __name__ == '__main__':
-    root = Tk()
-    root.title('Manipulator')
+
     ndevices = 2
     try:
         dev = LuigsNeumann_SM10()
     except SerialException:
         print "L&N SM-10 not found. Falling back on fake device."
-        dev = FakeDevice()
+        from multiprocessing import Process, Pipe
+        conn1, conn2 = Pipe()
+        process = Process(None, lambda: launch_device_gui(conn2))
+        process.start()
+        dev = FakeDevice(conn1)
+
+    root = Tk()
+    root.title('Manipulator')
+
     microscope = XYZUnit(dev, [7, 8, 9])
     unit = [XYZUnit(dev, [1, 2, 3]),
             XYZUnit(dev, [4, 5, 6])]

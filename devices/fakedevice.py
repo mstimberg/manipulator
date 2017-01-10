@@ -8,9 +8,9 @@ from numpy import zeros, array
 __all__ = ['FakeDevice']
 
 class FakeDevice(Device):
-    def __init__(self):
+    def __init__(self, comm_pipe):
         Device.__init__(self)
-        self.x = zeros(9) # Position of all axes
+        self.comm_pipe = comm_pipe
 
     def position(self, axis):
         '''
@@ -24,7 +24,9 @@ class FakeDevice(Device):
         -------
         The current position of the device axis in um.
         '''
-        return self.x[axis-1]
+        self.comm_pipe.send(('get', axis - 1))
+        pos = self.comm_pipe.recv()
+        return pos
 
     def absolute_move(self, x, axis):
         '''
@@ -35,4 +37,4 @@ class FakeDevice(Device):
         axis: axis number
         x : target position in um.
         '''
-        self.x[axis-1] = x
+        self.comm_pipe.send(('set', axis - 1, x))
